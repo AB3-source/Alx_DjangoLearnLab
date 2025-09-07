@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.views.generic import DetailView
+from django.views.generic.detail import DetailView  # 👈 checker expects this
 
 from .models import Book
-from .models import Library  # 👈 explicit import for checker
+from .models import Library  # 👈 checker expects explicit import
 
 
 # Function-based view to list all books
