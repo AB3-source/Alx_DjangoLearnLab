@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import permission_required
 from django.views.generic.detail import DetailView
 from .models import Book, Library
 from django import forms
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 
 # -----------------
 # FORMS
@@ -71,3 +73,17 @@ def delete_book(request, book_id):
         book.delete()
         return redirect('list_books')
     return render(request, "relationship_app/delete_book.html", {"book": book})
+
+# -----------------
+# USER REGISTRATION VIEW
+# -----------------
+def register(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # ✅ auto-login after registration
+            return redirect("list_books")  # redirect anywhere you want
+    else:
+        form = UserCreationForm()
+    return render(request, "relationship_app/register.html", {"form": form})
