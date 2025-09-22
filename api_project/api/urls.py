@@ -1,16 +1,16 @@
-# api/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.authtoken.views import obtain_auth_token
 from .views import BookList, BookViewSet
 
-# Create a router and register the BookViewSet
 router = DefaultRouter()
 router.register(r'books_all', BookViewSet, basename='book_all')
 
 urlpatterns = [
-    # Keep the Task 1 endpoint
     path('books/', BookList.as_view(), name='book-list'),
 
-    # Add the router-generated URLs (CRUD endpoints)
+    # ✅ Token auth endpoint
+    path('auth/token/', obtain_auth_token, name='api_token_auth'),
+
     path('', include(router.urls)),
 ]
