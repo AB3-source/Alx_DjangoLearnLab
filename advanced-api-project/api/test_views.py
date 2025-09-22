@@ -7,12 +7,12 @@ from rest_framework.authtoken.models import Token
 
 class BookAPITestCase(APITestCase):
     def setUp(self):
-        # Create test user and token for authentication
+        # Create a test user and generate a token for authentication
         self.user = User.objects.create_user(username="testuser", password="testpass")
         self.token = Token.objects.create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
-        # Create Author and Book instances
+        # Create Author and Book objects
         self.author = Author.objects.create(name="Author One")
         self.book = Book.objects.create(
             title="Book One",
@@ -21,10 +21,10 @@ class BookAPITestCase(APITestCase):
         )
 
     # -----------------------------
-    # CRUD Tests
+    # CRUD Operation Tests
     # -----------------------------
     def test_list_books(self):
-        url = reverse('book-list')  # URL name from BookList generic view
+        url = reverse('book-list')  # Must match ListAPIView name
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
@@ -78,5 +78,4 @@ class BookAPITestCase(APITestCase):
         url = reverse('book-list') + "?ordering=publication_year"
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # First book in ascending order
         self.assertEqual(response.data[0]['publication_year'], 2020)
