@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,9 +19,16 @@
         </nav>
     </header>
 
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="alert {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
     <div class="content">
         {% block content %}
-        <!-- Page-specific content goes here -->
         {% endblock %}
     </div>
 
