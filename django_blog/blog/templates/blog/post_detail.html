@@ -1,12 +1,60 @@
 {% extends "blog/base.html" %}
-{% block content %}
-  <h2>{{ object.title }}</h2>
-  <p>{{ object.content }}</p>
-  <p><small>By {{ object.author }} on {{ object.date_posted }}</small></p>
+{% load static %}
 
-  {% if user == object.author %}
-    <a href="{% url 'post-update' object.pk %}" class="btn btn-secondary">Edit</a>
-    <a href="{% url 'post-delete' object.pk %}" class="btn btn-danger">Delete</a>
+{% block title %}{{ object.title }} | Django Blog{% endblock %}
+
+{% block content %}
+  <article class="post-detail">
+    <h2>{{ object.title }}</h2>
+    <p><small>By {{ object.author }} on {{ object.created_at|date:"F j, Y, g:i a" }}</small></p>
+    <div class="content">
+      {{ object.content|linebreaks }}
+    </div>
+
+    {% if user.is_authenticated and user == object.author %}
+      <p>
+        <a href="{% url 'post-update' object.pk %}">Edit</a> |
+        <a href="{% url 'post-delete' object.pk %}">Delete</a>
+      </p>
+    {% endif %}
+  </article>
+
+  <hr>
+
+  <!-- Comments Section -->
+  <section class="comments">
+    <h3>Comments ({{ object.comments.count }})</h3>
+
+    {% for comment in object.comments.all %}
+      <div class="comment">
+        <p><strong>{{ comment.author }}</strong> said:</p>
+        <p>{{ comment.content|linebreaks }}</p>
+        <small>on {{ comment.created_at|date:"F j, Y, g:i a" }}</small>
+
+        {% if user.is_authenticated and user == comment.author %}
+          <p>
+            <a href="{% url 'comment-update' comment.pk %}">Edit</a> |
+            <a href="{% url 'comment-delete' comment.pk %}">Delete</a>
+          </p>
+        {% endif %}
+      </div>
+      <hr>
+    {% empty %}
+      <p>No comments yet. Be the first to comment!</p>
+    {% endfor %}
+  </section>
+
+  <!-- Add Comment Form -->
+  {% if user.is_authenticated %}
+    <section class="add-comment">
+      <h3>Leave a Comment</h3>
+      <form method="post" action="{% url 'add-comment' object.pk %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit">Post Comment</button>
+      </form>
+    </section>
+  {% else %}
+    <p><a href="{% url 'login' %}">Login</a> to leave a comment.</p>
   {% endif %}
-  <a href="{% url 'post-list' %}" class="btn btn-light">Back to Posts</a>
 {% endblock %}

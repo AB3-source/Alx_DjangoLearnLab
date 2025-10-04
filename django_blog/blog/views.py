@@ -1,52 +1,108 @@
-# blog/views.py
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import Post
-from .forms import PostForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+from .models import Post, Comment
+from .forms import PostForm, CommentForm
 
 
-# ListView – public
+# =======================
+# POST CRUD
+# =======================
+
 class PostListView(ListView):
     model = Post
-    template_name = 'blog/post_list.html'  # blog/templates/blog/post_list.html
-    context_object_name = 'posts'
-    paginate_by = 10
+    template_name = "blog/post_list.html"
+    context_object_name = "posts"
+    ordering = ["-created_at"]
 
-# DetailView – public
+
 class PostDetailView(DetailView):
     model = Post
-    template_name = 'blog/post_detail.html'
-    context_object_name = 'post'
+    template_name = "blog/post_detail.html"
 
-# CreateView – authenticated only
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["comments"] = self.object.comments.all().order_by("-created_at")
+        context["form"] = CommentForm()
+        return context
+
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
-    template_name = 'blog/post_form.html'
+    template_name = "blog/post_form.html"
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
-# UpdateView – only author
+
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     form_class = PostForm
-    template_name = 'blog/post_form.html'
+    template_name = "blog/post_form.html"
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 
     def test_func(self):
         post = self.get_object()
-        return post.author == self.request.user
+        return self.request.user == post.author
 
-# DeleteView – only author
+
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
-    template_name = 'blog/post_confirm_delete.html'
-    success_url = reverse_lazy('post-list')
+    template_name = "blog/post_confirm_delete.html"
+    success_url = "/"
 
     def test_func(self):
         post = self.get_object()
-        return post.author == self.request.user
+        return self.request.user == post.author
+
+
+# =======================
+# COMMENT CRUD
+# =======================
+
+@login_required
+def add_comment(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            messages.success(request, "Your comment has been added.")
+    return redirect("post-detail", pk=post.pk)
+
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment_form.html"
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = "blog/comment_confirm_delete.html"
+
+    def get_success_url(self):
+        return self.object.post.get_absolute_url()
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
