@@ -1,48 +1,50 @@
 # blog/views.py
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from .forms import UserRegisterForm
-from django import forms
+from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from .models import Post
+from .forms import PostForm
 
-# Registration view
-def register(request):
-    if request.method == "POST":
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()  # password is hashed automatically
-            username = form.cleaned_data.get('username')
-            messages.success(request, f"Account created for {username}. You can now log in.")
-            return redirect('login')
-    else:
-        form = UserRegisterForm()
-    return render(request, 'blog/register.html', {'form': form})
+# ListView – public
+class PostListView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'  # blog/templates/blog/post_list.html
+    context_object_name = 'posts'
+    paginate_by = 10
 
+# DetailView – public
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/post_detail.html'
+    context_object_name = 'post'
 
-# Simple form for editing user profile
-class UserUpdateForm(forms.ModelForm):
-    email = forms.EmailField(required=True)
+# CreateView – authenticated only
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/post_form.html'
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 
+# UpdateView – only author
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/post_form.html'
 
-@login_required
-def profile(request):
-    # Allow user to view and edit their profile
-    if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        if u_form.is_valid():
-            u_form.save()
-            messages.success(request, 'Your profile has been updated.')
-            return redirect('profile')
-    else:
-        u_form = UserUpdateForm(instance=request.user)
+    def test_func(self):
+        post = self.get_object()
+        return post.author == self.request.user
 
-    context = {
-        'u_form': u_form
-    }
-    return render(request, 'blog/profile.html', context)
+# DeleteView – only author
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    template_name = 'blog/post_confirm_delete.html'
+    success_url = reverse_lazy('post-list')
+
+    def test_func(self):
+        post = self.get_object()
+        return post.author == self.request.user
