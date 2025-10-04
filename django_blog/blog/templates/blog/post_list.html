@@ -1,31 +1,12 @@
 {% extends "blog/base.html" %}
-{% block title %}All Posts{% endblock %}
 {% block content %}
-  <h1>All Posts</h1>
-  {% if user.is_authenticated %}
-    <p><a href="{% url 'post-create' %}">Create new post</a></p>
-  {% endif %}
-  <ul>
-    {% for post in posts %}
-      <li>
-        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-        <small>by {{ post.author.username }} — {{ post.published_date|date:"M d, Y H:i" }}</small>
-        <p>{{ post.content|truncatechars:200 }}</p>
-      </li>
-    {% empty %}
-      <li>No posts yet.</li>
-    {% endfor %}
-  </ul>
-
-  {% if is_paginated %}
-    <div class="pagination">
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-      {% endif %}
-      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next</a>
-      {% endif %}
+  <h2>All Posts</h2>
+  {% for post in posts %}
+    <div class="post">
+      <h3><a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a></h3>
+      <p>{{ post.content|truncatewords:30 }}</p>
+      <p><small>By {{ post.author }} on {{ post.date_posted }}</small></p>
     </div>
-  {% endif %}
+  {% endfor %}
+  <a href="{% url 'post-create' %}" class="btn btn-primary">Create New Post</a>
 {% endblock %}
