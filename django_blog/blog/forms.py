@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from .models import Post, Comment
 
 
-# Registration form (extends Django's built-in form)
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
 
@@ -13,21 +12,22 @@ class UserRegisterForm(UserCreationForm):
         fields = ["username", "email", "password1", "password2"]
 
 
-# Post form
 class PostForm(forms.ModelForm):
+    # tags input as comma-separated string
+    tags = forms.CharField(required=False, help_text="Comma-separated tags (e.g. django,python)")
+
     class Meta:
         model = Post
-        fields = ["title", "content"]
+        fields = ["title", "content", "tags"]
 
 
-# Comment form
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ["content"]
 
     def clean_content(self):
-        content = self.cleaned_data.get("content")
-        if not content or content.strip() == "":
+        content = self.cleaned_data.get("content", "")
+        if not content.strip():
             raise forms.ValidationError("Comment cannot be empty.")
         return content

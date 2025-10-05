@@ -1,10 +1,12 @@
 {% extends "blog/base.html" %}
+{% block title %}{% if object %}Edit Post{% else %}New Post{% endif %}{% endblock %}
 {% block content %}
-  <h2>{% if object %}Edit Post{% else %}New Post{% endif %}</h2>
-  <form method="POST">
+  <h1>{% if object %}Edit Post{% else %}Create New Post{% endif %}</h1>
+  <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Save</button>
+    <!-- form's tags field is included as it's declared in PostForm -->
+    <button type="submit">Save</button>
   </form>
-  <a href="{% url 'post-list' %}" class="btn btn-light">Cancel</a>
+  <p><a href="{% url 'post-list' %}">Back</a></p>
 {% endblock %}

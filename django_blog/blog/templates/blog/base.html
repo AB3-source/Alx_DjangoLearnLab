@@ -12,10 +12,20 @@
         <nav>
             <ul>
                 <li><a href="{% url 'home' %}">Home</a></li>
-                <li><a href="{% url 'posts' %}">Blog Posts</a></li>
-                <li><a href="{% url 'login' %}">Login</a></li>
-                <li><a href="{% url 'register' %}">Register</a></li>
+                <li><a href="{% url 'post-list' %}">Blog Posts</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'logout' %}">Logout</a></li>
+                    <li><a href="{% url 'profile' %}">Profile</a></li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">Login</a></li>
+                    <li><a href="{% url 'register' %}">Register</a></li>
+                {% endif %}
             </ul>
+            <!-- Search form -->
+            <form action="{% url 'search' %}" method="get" class="search-form" style="display:inline;">
+                <input type="text" name="q" placeholder="Search posts or tags..." value="{{ request.GET.q|default:'' }}">
+                <button type="submit">Search</button>
+            </form>
         </nav>
     </header>
 
