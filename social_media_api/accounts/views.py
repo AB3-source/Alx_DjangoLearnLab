@@ -1,7 +1,21 @@
 from rest_framework import status, permissions, generics
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import User  # if your custom user model class is named CustomUser, import it instead
+from .models import User
+from django.contrib.contenttypes.models import ContentType
+from notifications.models import Notification
+
+# after request.user.follow(target)
+if target != request.user:
+    Notification.objects.create(
+        recipient=target,
+        actor=request.user,
+        verb='followed',
+        target_content_type=ContentType.objects.get_for_model(request.user.__class__),
+        target_object_id=str(request.user.id),
+        data={'follower_username': request.user.username}
+    )
+
 
 # --- Follow / Unfollow functionality --- #
 class FollowUserView(generics.GenericAPIView):

@@ -100,3 +100,15 @@ Headers: `Authorization: Token <token>`
 `GET /api/posts/feed/`
 Headers: `Authorization: Token <token>`
 Returns posts from users you follow, newest first (paginated).
+### Likes
+- POST /api/posts/<post_id>/like/  — Like a post (auth required)
+- POST /api/posts/<post_id>/unlike/ — Unlike a post (auth required)
+
+Example: POST /api/posts/3/like/
+Headers: Authorization: Token <token>
+Response: { "detail": "Post liked.", "likes_count": 4 }
+
+### Notifications
+- GET /api/notifications/ — List your notifications (auth required). Query param: ?unread=true
+- POST /api/notifications/mark-read/<id>/ — Mark a notification as read
+- POST /api/notifications/mark-all-read/ — Mark all your notifications as read

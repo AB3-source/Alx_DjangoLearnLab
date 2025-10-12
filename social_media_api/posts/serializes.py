@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Post, Comment
+from .models import Post, Comment, Like
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CommentSerializer(serializers.ModelSerializer):
     author_username = serializers.ReadOnlyField(source='author.username')
@@ -12,8 +15,9 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     author_username = serializers.ReadOnlyField(source='author.username')
     comments = CommentSerializer(many=True, read_only=True)
+    likes_count = serializers.IntegerField(source='likes.count', read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'author_username', 'title', 'content', 'created_at', 'updated_at', 'comments']
-        read_only_fields = ['author', 'created_at', 'updated_at']
+        fields = ['id', 'author', 'author_username', 'title', 'content', 'created_at', 'updated_at', 'comments', 'likes_count']
+        read_only_fields = ['author', 'created_at', 'updated_at', 'likes_count']
