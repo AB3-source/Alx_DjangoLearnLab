@@ -43,3 +43,39 @@ Base URL: `http://127.0.0.1:8000/api/accounts/`
 - Use `Authorization: Token <token>` for authenticated endpoints.
 - In development, profile pictures are served via MEDIA_URL.
 - This is a minimal starter; for production you must secure media, use HTTPS, and consider JWT or improved token strategies.
+## Posts API
+
+### Endpoints
+- `GET /api/posts/` — List all posts (paginated, searchable by `?search=term`)
+- `POST /api/posts/` — Create a new post (auth required)
+- `GET /api/posts/<id>/` — Retrieve single post
+- `PATCH /api/posts/<id>/` — Update post (only author)
+- `DELETE /api/posts/<id>/` — Delete post (only author)
+
+### Example
+Request:
+POST /api/posts/
+Headers: Authorization: Token <token>
+Body: {"title": "Hello World", "content": "This is my first post."}
+
+Response:
+{
+  "id": 1,
+  "author_username": "johndoe",
+  "title": "Hello World",
+  "content": "This is my first post."
+}
+
+## Comments API
+
+### Endpoints
+- `GET /api/comments/` — List all comments (paginated)
+- `POST /api/comments/` — Create comment on a post (auth required)
+- `GET /api/comments/<id>/` — Retrieve single comment
+- `PATCH /api/comments/<id>/` — Update comment (only author)
+- `DELETE /api/comments/<id>/` — Delete comment (only author)
+
+### Example
+POST /api/comments/
+Headers: Authorization: Token <token>
+Body: {"post": 1, "content": "Great post!"}
