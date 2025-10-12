@@ -79,3 +79,24 @@ Response:
 POST /api/comments/
 Headers: Authorization: Token <token>
 Body: {"post": 1, "content": "Great post!"}
+## Follows & Feed
+
+### Follow a user
+`POST /api/accounts/follow/<user_id>/`
+Headers: `Authorization: Token <token>`
+Response: confirmation + updated counts
+
+### Unfollow a user
+`POST /api/accounts/unfollow/<user_id>/`
+Headers: `Authorization: Token <token>`
+
+### Get who a user follows
+`GET /api/accounts/following/<user_id>/` or `GET /api/accounts/following/` (your following)
+
+### Get a user's followers
+`GET /api/accounts/followers/<user_id>/` or `GET /api/accounts/followers/` (your followers)
+
+### User feed
+`GET /api/posts/feed/`
+Headers: `Authorization: Token <token>`
+Returns posts from users you follow, newest first (paginated).

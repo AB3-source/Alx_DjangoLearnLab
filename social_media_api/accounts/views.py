@@ -1,54 +1,67 @@
-from rest_framework import generics, permissions, status
+# accounts/views.py (add these imports at top if not present)
+from rest_framework import status, permissions
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
-from .models import User
+User = get_user_model()
 
-
-# 🧩 Registration view (supports JSON + multipart/form-data)
-class RegisterAPIView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
-    parser_classes = [JSONParser, MultiPartParser, FormParser]  # ✅ accept both JSON and form data
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        # Create or retrieve auth token
-        token, _ = Token.objects.get_or_create(user=user)
-
-        # Prepare response data
-        data = UserSerializer(user, context={'request': request}).data
-        data['token'] = token.key
-        return Response(data, status=status.HTTP_201_CREATED)
-
-
-# 🔐 Login view (returns token)
-class LoginAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
-    parser_classes = [JSONParser]  # Login always expects JSON
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, _ = Token.objects.get_or_create(user=user)
-
-        data = UserSerializer(user, context={'request': request}).data
-        data['token'] = token.key
-        return Response(data)
-
-
-# 👤 Profile view (retrieve/update your own profile)
-class ProfileAPIView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserSerializer
+class FollowUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [JSONParser, MultiPartParser, FormParser]  # ✅ handle both JSON and file uploads
 
-    def get_object(self):
-        return self.request.user
+    def post(self, request, user_id):
+        target = get_object_or_404(User, id=user_id)
+        if target == request.user:
+            return Response({'detail': "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.follow(target)  # uses model helper
+        return Response({
+            'detail': f'You are now following {target.username}.',
+            'following_count': request.user.following.count(),
+            'target_followers_count': target.followers.count()
+        }, status=status.HTTP_200_OK)
+
+class UnfollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        target = get_object_or_404(User, id=user_id)
+        if target == request.user:
+            return Response({'detail': "You cannot unfollow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.unfollow(target)
+        return Response({
+            'detail': f'You have unfollowed {target.username}.',
+            'following_count': request.user.following.count(),
+            'target_followers_count': target.followers.count()
+        }, status=status.HTTP_200_OK)
+
+class FollowingListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, user_id=None):
+        """
+        If user_id is provided, show following for that user (publicly visible).
+        Otherwise show the authenticated user's following.
+        """
+        if user_id:
+            user = get_object_or_404(User, id=user_id)
+        else:
+            user = request.user
+
+        # serialize minimal info
+        data = [{'id': u.id, 'username': u.username} for u in user.following.all()]
+        return Response({'user': user.username, 'following': data})
+
+class FollowersListView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, user_id=None):
+        if user_id:
+            user = get_object_or_404(User, id=user_id)
+        else:
+            user = request.user
+
+        data = [{'id': u.id, 'username': u.username} for u in user.followers.all()]
+        return Response({'user': user.username, 'followers': data})
